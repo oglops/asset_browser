@@ -1,18 +1,19 @@
 #!/usr/bin/env python
 import os
 import sys
-from Qt import QtWidgets, QtCompat
+from Qt import QtWidgets, QtCompat, QtCore
 from dataclasses import fields
 from typing import List
 
 uiFile = os.path.join(os.path.dirname(__file__), "test.ui")
+print(f"uiFile = {uiFile}")
 
 try:
     import maya.OpenMayaUI as apiUI
 
     def getMayaWindow():
         ptr = apiUI.MQtUtil.mainWindow()
-        return QtCompat.wrapInstance(long(ptr), QtWidgets.QMainWindow)
+        return QtCompat.wrapInstance(int(ptr), QtWidgets.QMainWindow)
 
 except:
     pass
@@ -28,16 +29,8 @@ class MyWindow(QtWidgets.QDialog):
 
     def __init__(self, parent=None):
         super(MyWindow, self).__init__(parent)
-        uiFile = "test.ui"
         QtCompat.loadUi(uiFile, self)
-        # self.ui.show()
         self.setWindowTitle("test")
-
-        # Create some Char instances
-        # chars = [
-        #     Asset(_type=AssetType.CHARACTER, version=13, entity="han", lod="lo"),
-        #     Asset(_type=AssetType.PROP, version=3, entity="phone", lod="hi"),
-        # ]
 
         import random, names
 
@@ -48,7 +41,7 @@ class MyWindow(QtWidgets.QDialog):
                 entity=names.get_first_name(),
                 lod = random.choice(('lo','hi'))
             )
-            for i in range(20)
+            for i in range(10)
         ]
 
         # Create the model and set it to the list view
@@ -60,11 +53,7 @@ class MyWindow(QtWidgets.QDialog):
         self.delegate = AssetDelegate()
         self.tableView.setItemDelegate(self.delegate)
 
-        # from _model import StyledItemDelegateTriangle
-        # d = StyledItemDelegateTriangle()
-        # self.tableView.setItemDelegate(d)
-
-        # self.ui.resize(500, 300)
+        self.resize(330, 420)
         self.show()
 
         self.resetBtn.clicked.connect(self._resetChanges)
@@ -98,6 +87,7 @@ def main():
             pass
         win = MyWindow(getMayaWindow())
     else:
+        QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_ShareOpenGLContexts)
         app = QtWidgets.QApplication(sys.argv)
         win = MyWindow()
         sys.exit(app.exec())
