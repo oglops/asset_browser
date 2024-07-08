@@ -1,0 +1,7 @@
+headers:
+  - Type:
+    visibility: 0
+    widget: QLabel
+  - Entity
+  - Version
+
