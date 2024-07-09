@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import os
 import sys
-from Qt import QtWidgets, QtCompat, QtCore
+from Qt import QtWidgets, QtCompat, QtCore, QtGui
 from dataclasses import fields
 from typing import List
 
@@ -21,8 +21,85 @@ except:
 
 from _model import AssetModel, AssetDelegate
 
-from _asset import AssetDef, AssetType
+from _asset import Asset, AssetType
+from functools import partial
 
+class PersistentMenu(QtWidgets.QMenu):
+    def mouseReleaseEvent(self, event):
+        action = self.activeAction()
+
+        if action and action.isEnabled():
+            if not action.isCheckable():
+                super(PersistentMenu, self).mouseReleaseEvent(event)
+                return
+
+            action.setEnabled(False)
+            super(PersistentMenu, self).mouseReleaseEvent(event)
+            action.setEnabled(True)
+            action.trigger()
+        else:
+            super(PersistentMenu, self).mouseReleaseEvent(event)
+
+class CustomTableView(QtWidgets.QTableView):
+    def __init__(self, *args, **kwargs):
+        super(CustomTableView, self).__init__(**kwargs)
+
+        header = self.horizontalHeader()
+        header.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        header.customContextMenuRequested.connect(self.build_menu)
+
+        self.setSortingEnabled(True)
+
+    def build_menu(self, pos):
+
+        menu = PersistentMenu()
+
+        action = QtWidgets.QWidgetAction(menu)
+
+        for i, header in enumerate(self.model().headers):
+            action = menu.addAction(header)
+            if i==0: 
+                action.setEnabled(False)
+            action.setCheckable(True)
+            action.setChecked(header in self.model()._visible_columns)
+            action.triggered[bool].connect(partial(self.__updateColumnVis, header))
+        
+        menu.addSeparator()    
+        clearAction = menu.addAction("Use Default")
+        clearAction.triggered.connect(
+                partial(self.__defaultColumns)
+            )
+    
+        menu.setStyleSheet("""
+            QMenu::item:disabled {
+                background: lightgray;
+                color: gray;
+            }
+        """)
+        menu.exec_(self.horizontalHeader().viewport().mapToGlobal(pos))
+
+    def __updateColumnVis(self, header, vis):
+        if not vis:
+            self.model()._visible_columns.remove(header)
+        else:
+            self.model()._visible_columns.add(header)
+        
+        index = self.model().headers.index(header)
+        self.setColumnHidden(index, not vis)
+        # print(f"set col {index} {not vis} {self.model().headers}")
+
+    def __defaultColumns(self):
+        for i,field in enumerate(self.model().fields):
+            if not field.metadata:
+                self.setColumnHidden(False)
+                continue
+
+            if visible:= field.metadata.get('visible'):
+                self.setColumnHidden(i, not visible)
+            else:
+                self.setColumnHidden(i, False)
+
+        self.model()._visible_columns = set(self.model().headers)
 
 class MyWindow(QtWidgets.QDialog):
 
@@ -46,6 +123,7 @@ class MyWindow(QtWidgets.QDialog):
         # Create the model and set it to the list view
         self.model = AssetModel(self.assets)
         self.tableView.setModel(self.model)
+        print(self.tableView)
 
         # Set the custom delegate
         self.delegate = AssetDelegate()
