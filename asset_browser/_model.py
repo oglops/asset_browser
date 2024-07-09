@@ -17,11 +17,10 @@ class AssetModel(QtCore.QAbstractTableModel):
     def __init__(self, assets: List[AssetDef], parent=None):
         super().__init__(parent)
         self.assets = assets
-        self.fields = [
-            x for x in fields(AssetDef) if x.metadata.get("visible") != False
-        ]
-        self.headers = [x.metadata.get("ui_name", x.name) for x in self.fields]
-
+        self.fields = [ x for x in fields(AssetDef) if x.metadata.get('visible')!=False]
+        self.headers = [x.metadata.get('ui_name', x.name) for x in self.fields ]
+        self._visible_columns = set(self.headers)
+    
     def headerData(self, section, orientation, role):
         # section is the index of the column/row.
         if role == QtCore.Qt.DisplayRole:
@@ -71,6 +70,12 @@ class AssetModel(QtCore.QAbstractTableModel):
             | QtCore.Qt.ItemIsEnabled
         )
 
+    def sort(self, column, order):
+        self._sort_column = column
+        self._sort_order = order
+        self.layoutAboutToBeChanged.emit()
+        self.assets = list(sorted(self.assets, key=lambda x: getattr(x, self.fields[column].name), reverse=(order == QtCore.Qt.DescendingOrder)))
+        self.layoutChanged.emit()
 
 from Qt.QtWidgets import (
     QStyledItemDelegate,
