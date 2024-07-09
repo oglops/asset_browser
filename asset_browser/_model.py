@@ -48,7 +48,7 @@ class AssetModel(QtCore.QAbstractTableModel):
         return False
 
     def flags(self, index):
-        return QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled
+        return QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled
 
 
 from Qt.QtWidgets import (
@@ -90,7 +90,7 @@ class AssetDelegate(QStyledItemDelegate):
         asset = index.model().assets[index.row()]
         field = index.model().fields[index.column()]
         # if field.type == AssetDataType.VERSION:
-        print('search for ', str(getattr(asset, field.name)))
+        # print('search for', str(getattr(asset, field.name)))
         index = editor.findText(str(getattr(asset, field.name)))
         if index!=-1:
             editor.setCurrentIndex(index)

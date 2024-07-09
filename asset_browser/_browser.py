@@ -46,12 +46,13 @@ class MyWindow(QtWidgets.QDialog):
 
         # Create the model and set it to the list view
         self.model = AssetModel(self.assets)
-        # self.list_view = self.findChild(QtWidgets.QListView, "listView")
         self.tableView.setModel(self.model)
 
         # Set the custom delegate
         self.delegate = AssetDelegate()
         self.tableView.setItemDelegate(self.delegate)
+
+        self.tableView.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
 
         self.resize(330, 420)
         self.show()
