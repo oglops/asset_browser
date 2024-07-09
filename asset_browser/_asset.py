@@ -20,8 +20,8 @@ class AssetDataType(Enum):
 class AssetDef:
     _type: AssetType = field(metadata={"visible": False, "ui_name": "Type"})
     entity: AssetDataType.ENTITY = field(metadata={"ui_name": "Entity"})
-    version: AssetDataType.VERSION = field(metadata={"ui_name": "Version"})
-    lod: AssetDataType.LOD = field(default='lo', metadata={"ui_name": "LOD"})
+    version: AssetDataType.VERSION = field(metadata={"ui_name": "Version", "affect": ("lod",)})
+    lod: AssetDataType.LOD = field(default='lo', metadata={"ui_name": "LOD", })
 
     def __post_init__(self):
         self._dirty = False
@@ -64,10 +64,10 @@ class AssetDef:
                 setattr(self,f.name, self._original_values[f.name] )
                 print(f'reset {f.name} to {self._original_values[f.name]}')
 
-@dataclass
-class Asset(AssetDef):
-    version: int = 10
-    # lod = 'lo'
+# @dataclass
+# class Asset(AssetDef):
+#     version: int = 10
+#     # lod = 'lo'
 
 
 # a = Asset(_type=AssetType.CHARACTER, version=20, entity='han')
