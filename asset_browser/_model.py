@@ -1,8 +1,9 @@
 from Qt import QtGui, QtCore
 
 from typing import List
-from _asset import Asset, AssetType, AssetDef, AssetDataType
+from _asset import AssetType, AssetDef, AssetDataType
 from dataclasses import fields
+import random
 
 # instead of hardcoding headers, one could extract them into external yaml config
 # HEADERS = {
@@ -11,13 +12,16 @@ from dataclasses import fields
 #     "Version": {"type": int},
 # }
 
+
 class AssetModel(QtCore.QAbstractTableModel):
-    def __init__(self, assets: List[Asset], parent=None):
+    def __init__(self, assets: List[AssetDef], parent=None):
         super().__init__(parent)
         self.assets = assets
-        self.fields = [ x for x in fields(AssetDef) if x.metadata.get('visible')!=False]
-        self.headers = [x.metadata.get('ui_name', x.name) for x in self.fields ]
-    
+        self.fields = [
+            x for x in fields(AssetDef) if x.metadata.get("visible") != False
+        ]
+        self.headers = [x.metadata.get("ui_name", x.name) for x in self.fields]
+
     def headerData(self, section, orientation, role):
         # section is the index of the column/row.
         if role == QtCore.Qt.DisplayRole:
@@ -41,14 +45,31 @@ class AssetModel(QtCore.QAbstractTableModel):
     def setData(self, index, value, role):
         if role == QtCore.Qt.EditRole:
             asset = self.assets[index.row()]
-            for key, val in value.items():
-                setattr(asset, key, val)
+            field = self.fields[index.column()]
+            setattr(asset, field.name, value)
             self.dataChanged.emit(index, index, [QtCore.Qt.EditRole])
+
+            # if the field affects other field
+            if field.metadata:
+                print(f"check field: {field.name} {field.metadata}")
+                if affected := field.metadata.get("affect"):
+                    print(f"calculate default for affected fields {affected}")
+                    # can extract the update logic into abstract methods
+                    for affected_field in affected:
+                        new_val = random.choice(("lo", "hi"))
+                        print(f"new_val= {new_val}")
+                        if new_val != getattr(asset, affected_field):
+                            setattr(asset, affected_field, new_val)
+                            print(f"Updated affected field {affected_field}")
             return True
         return False
 
     def flags(self, index):
-        return QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled
+        return (
+            QtCore.Qt.ItemIsSelectable
+            | QtCore.Qt.ItemIsEditable
+            | QtCore.Qt.ItemIsEnabled
+        )
 
 
 from Qt.QtWidgets import (
@@ -59,16 +80,17 @@ from Qt.QtWidgets import (
     QHBoxLayout,
 )
 
+
 # a way to avoid if/else here is to put this function
 # inside each column/property's Delegate class
-def makeEditorWidget( _type, asset, parent):
+def makeEditorWidget(_type, asset, parent):
     combobox = QComboBox(parent)
     if _type == AssetDataType.VERSION:
         # get all versions of the asset
         combobox.addItems([str(i) for i in range(20)])
-        
+
     elif _type == AssetDataType.LOD:
-        combobox.addItems(['lo', 'hi'])
+        combobox.addItems(["lo", "hi"])
 
     return combobox
 
@@ -81,8 +103,8 @@ class AssetDelegate(QStyledItemDelegate):
         # could add layout and custom widget too
         asset = index.model().assets[index.row()]
         field = index.model().fields[index.column()]
-        print('user about to change', field.type)
-        editor = makeEditorWidget( field.type, asset, parent)
+        print("user about to change", field.type)
+        editor = makeEditorWidget(field.type, asset, parent)
 
         return editor
 
@@ -92,25 +114,22 @@ class AssetDelegate(QStyledItemDelegate):
         # if field.type == AssetDataType.VERSION:
         # print('search for', str(getattr(asset, field.name)))
         index = editor.findText(str(getattr(asset, field.name)))
-        if index!=-1:
+        if index != -1:
             editor.setCurrentIndex(index)
         else:
             print(f"not found {index}  {asset.version}")
-        
+
         editor.showPopup()
 
     def setModelData(self, editor, model, index):
-        # layout = editor.layout()
-        asset = model.assets[index.row()]
-
-        field = index.model().fields[index.column()]
-        # if field.type == AssetDataType.VERSION:
+        # asset = model.assets[index.row()]
+        # field = index.model().fields[index.column()]
+        # # if field.type == AssetDataType.VERSION:
         content = editor.currentText()
-        setattr(asset, field.name, content)
-        print(f'set {field.name} {content}')
+        # setattr(asset, field.name, content)
+        # print(f"set {field.name} {content}")
 
-
-        model.setData(index, asset.attributes, QtCore.Qt.EditRole)
+        model.setData(index, content, QtCore.Qt.EditRole)
 
     def updateEditorGeometry(self, editor, option, index):
         editor.setGeometry(option.rect)
@@ -127,14 +146,17 @@ class AssetDelegate(QStyledItemDelegate):
             return
 
         polygonTriangle = QtGui.QPolygon()
-        polygonTriangle.append(QtCore.QPoint(option.rect.right()-5, option.rect.top()))
-        polygonTriangle.append( QtCore.QPoint(option.rect.right(), option.rect.top()))
-        polygonTriangle.append( QtCore.QPoint(option.rect.right(), option.rect.top()+5))
+        polygonTriangle.append(
+            QtCore.QPoint(option.rect.right() - 5, option.rect.top())
+        )
+        polygonTriangle.append(QtCore.QPoint(option.rect.right(), option.rect.top()))
+        polygonTriangle.append(
+            QtCore.QPoint(option.rect.right(), option.rect.top() + 5)
+        )
 
         painter.save()
         painter.setRenderHint(QtGui.QPainter.Antialiasing)
-        painter.setBrush(QtGui.QBrush(QtGui.QColor(QtCore.Qt.darkGreen))) 
+        painter.setBrush(QtGui.QBrush(QtGui.QColor(QtCore.Qt.darkGreen)))
         painter.setPen(QtGui.QPen(QtGui.QColor(QtCore.Qt.darkGreen)))
         painter.drawPolygon(polygonTriangle)
         painter.restore()
-

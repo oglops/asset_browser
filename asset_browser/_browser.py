@@ -18,11 +18,10 @@ try:
 except:
     pass
 
-from _asset import Asset
 
 from _model import AssetModel, AssetDelegate
 
-from _asset import Asset, AssetType
+from _asset import AssetDef, AssetType
 
 
 class MyWindow(QtWidgets.QDialog):
@@ -35,7 +34,7 @@ class MyWindow(QtWidgets.QDialog):
         import random, names
 
         self.assets = [
-            Asset(
+            AssetDef(
                 _type=random.choice(list(AssetType)),
                 version=random.randint(1, 20),
                 entity=names.get_first_name(),
