@@ -5,6 +5,10 @@ from _asset import AssetType, AssetDef, AssetDataType
 from dataclasses import fields
 import random
 
+from Qt.QtWidgets import QApplication, QMainWindow, QTableView, QComboBox, QStyledItemDelegate, QVBoxLayout, QWidget, QTableWidgetItem, QTableWidget
+from Qt.QtCore import Qt, QModelIndex, QRect, QSize
+from Qt.QtWidgets import QStyleOptionComboBox, QStyle
+
 # instead of hardcoding headers, one could extract them into external yaml config
 # HEADERS = {
 #     "Type": {"visibility": False, "attr":},
@@ -144,6 +148,20 @@ class AssetDelegate(QStyledItemDelegate):
         super().paint(painter, option, index)
         asset = index.model().assets[index.row()]
 
+        field = index.model().fields[index.column()]
+
+        if field.type in (AssetDataType.LOD ,AssetDataType.VERSION):
+            value = index.model().data(index, Qt.DisplayRole)
+            combobox_option = QStyleOptionComboBox()
+            combobox_option.rect = option.rect
+            combobox_option.currentText = str(value)
+            combobox_option.state = option.state | QStyle.State_Enabled
+            # combobox_option.frame = True
+ 
+            # Draw the combobox
+            QApplication.style().drawComplexControl(QStyle.CC_ComboBox, combobox_option, painter)
+            QApplication.style().drawControl(QStyle.CE_ComboBoxLabel, combobox_option, painter)
+
         fields = index.model().fields
         field = fields[index.column()]
         # if getattr(asset, field.name) == field.default
@@ -165,3 +183,45 @@ class AssetDelegate(QStyledItemDelegate):
         painter.setPen(QtGui.QPen(QtGui.QColor(QtCore.Qt.darkGreen)))
         painter.drawPolygon(polygonTriangle)
         painter.restore()
+
+# not used right now, one could also define specific delegates for certain columns
+# if things get complex and do not wish to have lots of if/else in main delegate
+class ComboBoxDelegate(QStyledItemDelegate):
+    def __init__(self, items, parent=None):
+        super(ComboBoxDelegate, self).__init__(parent)
+        self.items = items
+
+    def createEditor(self, parent, option, index):
+        editor = QComboBox(parent)
+        editor.addItems(self.items)
+        return editor
+
+    def setEditorData(self, editor, index):
+        value = index.model().data(index, Qt.EditRole)
+        editor.setCurrentText(value)
+
+    def setModelData(self, editor, model, index):
+        model.setData(index, editor.currentText(), Qt.EditRole)
+
+    def updateEditorGeometry(self, editor, option, index):
+        editor.setGeometry(option.rect)
+
+    def paint(self, painter, option, index):
+        value = index.model().data(index, Qt.DisplayRole)
+
+        combobox_option = QStyleOptionComboBox()
+        combobox_option.rect = option.rect
+        combobox_option.currentText = value
+        combobox_option.state = option.state
+
+        # Draw the combobox
+        QApplication.style().drawComplexControl(QStyle.CC_ComboBox, combobox_option, painter)
+        QApplication.style().drawControl(QStyle.CE_ComboBoxLabel, combobox_option, painter)
+
+    def editorEvent(self, event, model, option, index):
+        if event.type() == event.MouseButtonPress:
+            if option.rect.contains(event.pos()):
+                self.commitData.emit(index)
+                self.closeEditor.emit(index, self.NoHint)
+                return True
+        return super(ComboBoxDelegate, self).editorEvent(event, model, option, index)
