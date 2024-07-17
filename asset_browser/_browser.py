@@ -19,9 +19,9 @@ except:
     pass
 
 
-from _model import AssetModel, AssetDelegate
+from _model import AssetModel, AssetDelegate, ComboBoxDelegate
 
-from _asset import Asset, AssetType
+from _asset import AssetDef, AssetType
 from functools import partial
 
 class PersistentMenu(QtWidgets.QMenu):
@@ -130,6 +130,8 @@ class MyWindow(QtWidgets.QDialog):
         self.tableView.setItemDelegate(self.delegate)
 
         self.tableView.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
+        self.tableView.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+        self.tableView.setStyleSheet("QTableView { gridline-color: rgba(0,0,0,0.0); }")
 
         self.resize(330, 420)
         self.show()
