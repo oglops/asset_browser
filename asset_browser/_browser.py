@@ -131,7 +131,7 @@ class MyWindow(QtWidgets.QDialog):
 
         self.tableView.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.tableView.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
-        self.tableView.setStyleSheet("QTableView { gridline-color: rgba(0,0,0,0.0); }")
+        self.tableView.setShowGrid(False)
 
         self.resize(330, 420)
         self.show()
