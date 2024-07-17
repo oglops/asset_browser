@@ -145,22 +145,32 @@ class AssetDelegate(QStyledItemDelegate):
         editor.setGeometry(option.rect)
 
     def paint(self, painter, option, index):
-        super().paint(painter, option, index)
         asset = index.model().assets[index.row()]
 
         field = index.model().fields[index.column()]
-
+        
+        hide_default_draw = False
         if field.type in (AssetDataType.LOD ,AssetDataType.VERSION):
+            hide_default_draw = True
             value = index.model().data(index, Qt.DisplayRole)
             combobox_option = QStyleOptionComboBox()
-            combobox_option.rect = option.rect
             combobox_option.currentText = str(value)
             combobox_option.state = option.state | QStyle.State_Enabled
             # combobox_option.frame = True
- 
+
+            shrink_factor = 0.8
+            new_width = int(option.rect.width() * shrink_factor)
+            new_height = int(option.rect.height() * shrink_factor)
+            new_x = option.rect.center().x() - new_width // 2
+            new_y = option.rect.center().y() - new_height // 2
+            combobox_option.rect = QRect(new_x, new_y, new_width, new_height)
+
             # Draw the combobox
             QApplication.style().drawComplexControl(QStyle.CC_ComboBox, combobox_option, painter)
             QApplication.style().drawControl(QStyle.CE_ComboBoxLabel, combobox_option, painter)
+
+        if not hide_default_draw:
+            super().paint(painter, option, index)
 
         fields = index.model().fields
         field = fields[index.column()]
