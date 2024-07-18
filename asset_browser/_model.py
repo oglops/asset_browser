@@ -140,9 +140,16 @@ class AssetDelegate(QStyledItemDelegate):
 
         model.setData(index, content, QtCore.Qt.EditRole)
 
+    def scaleRect(self, rect, factor=0.8):
+        shrink_factor = 0.8
+        new_width = int(rect.width() * shrink_factor)
+        new_height = int(rect.height() * shrink_factor)
+        new_x = rect.center().x() - new_width // 2
+        new_y = rect.center().y() - new_height // 2
+        return QRect(new_x, new_y, new_width, new_height)
+
     def updateEditorGeometry(self, editor, option, index):
-        editor.setGeometry(option.rect)
-        editor.setGeometry(option.rect)
+        editor.setGeometry(self.scaleRect(option.rect))
 
     def paint(self, painter, option, index):
         asset = index.model().assets[index.row()]
@@ -157,13 +164,7 @@ class AssetDelegate(QStyledItemDelegate):
             combobox_option.currentText = str(value)
             combobox_option.state = option.state | QStyle.State_Enabled
             # combobox_option.frame = True
-
-            shrink_factor = 0.8
-            new_width = int(option.rect.width() * shrink_factor)
-            new_height = int(option.rect.height() * shrink_factor)
-            new_x = option.rect.center().x() - new_width // 2
-            new_y = option.rect.center().y() - new_height // 2
-            combobox_option.rect = QRect(new_x, new_y, new_width, new_height)
+            combobox_option.rect = self.scaleRect(option.rect)
 
             # Draw the combobox
             QApplication.style().drawComplexControl(QStyle.CC_ComboBox, combobox_option, painter)
