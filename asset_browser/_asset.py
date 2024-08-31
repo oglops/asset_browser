@@ -29,6 +29,8 @@ class AssetDef:
             field.name: getattr(self, field.name) for field in fields(self)
         }
         self._dirty_fields = {}
+        self._overriden = False
+        self._override_str = ''
 
     def __setattr__(self, name: str, value: Any) -> None:
         if name in getattr(self, "_original_values", {}):

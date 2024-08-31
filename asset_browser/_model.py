@@ -8,6 +8,7 @@ import random
 from Qt.QtWidgets import QApplication, QMainWindow, QTableView, QComboBox, QStyledItemDelegate, QVBoxLayout, QWidget, QTableWidgetItem, QTableWidget
 from Qt.QtCore import Qt, QModelIndex, QRect, QSize
 from Qt.QtWidgets import QStyleOptionComboBox, QStyle
+from Qt import QtWidgets
 
 # instead of hardcoding headers, one could extract them into external yaml config
 # HEADERS = {
@@ -151,13 +152,70 @@ class AssetDelegate(QStyledItemDelegate):
     def updateEditorGeometry(self, editor, option, index):
         editor.setGeometry(self.scaleRect(option.rect))
 
+    def getCellRect(self, option, column):
+        """
+        Helper function to get the QRect for a specific cell in a row
+        """
+        cell_width = option.rect.width() // option.model.columnCount()
+        cell_rect = option.rect
+        cell_rect.setLeft(option.rect.left() + column * cell_width)
+        cell_rect.setRight(cell_rect.left() + cell_width)
+        return cell_rect
+    
     def paint(self, painter, option, index):
         asset = index.model().assets[index.row()]
 
         field = index.model().fields[index.column()]
         
         hide_default_draw = False
+        # style_painter = QtWidgets.QStylePainter(option.widget)
+        style = QtWidgets.QApplication.style()
         if field.type in (AssetDataType.LOD ,AssetDataType.VERSION):
+
+            if asset._overriden:
+                if field.type == AssetDataType.LOD:
+                    return
+
+                frame_option = QtWidgets.QStyleOptionFrame()
+
+                # rect = option.rect.adjusted(0,0,90,0)
+                frame_option.rect = self.scaleRect(option.rect.adjusted(0,0,90,0))
+                frame_option.lineWidth=1
+
+                # line_edit_option.rect = QtCore.QRect(0,0, 200, 50)
+                # line_edit_option = QtWidgets.QStyleOption()
+                # line_edit_option = option_clone
+                # line_edit_option.rect = option_clone.rect
+                frame_option.state |= QtWidgets.QStyle.State_Sunken
+
+                # line_edit_option.palette = option.palette
+                frame_option.fontMetrics = QtGui.QFontMetrics(option.font)
+
+                # # Disable the default painting for the selected state
+                # option.state &= ~QtWidgets.QStyle.State_Selected
+
+                # Draw the selection background manually
+                if option.state & QtWidgets.QStyle.State_Selected:
+                    painter.fillRect(frame_option.rect, option.palette.highlight())
+                    
+                style.drawPrimitive(QtWidgets.QStyle.PE_PanelLineEdit, frame_option, painter)
+                # option_clone.rect = option_clone.rect.translated(option_clone.rect.width() * (column - index.column()), 0)
+                # rect_col1 = self.getCellRect(option, index, 1)
+                # rect_col2 = self.getCellRect(option, index, 2)
+                # query the row rect
+                text = "awesome"
+                # QApplication.style().drawItemText(painter, line_edit_option.rect.adjusted(2, 0, -2, 0), QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, option.palette, True, text)
+
+                style.drawItemText(
+                    painter,
+                    frame_option.rect.adjusted(2, 0, -2, 0),
+                    QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter,
+                    option.palette,
+                    True,
+                    text
+                )
+                return
+
             hide_default_draw = True
             value = index.model().data(index, Qt.DisplayRole)
             combobox_option = QStyleOptionComboBox()
@@ -171,6 +229,23 @@ class AssetDelegate(QStyledItemDelegate):
             QApplication.style().drawControl(QStyle.CE_ComboBoxLabel, combobox_option, painter)
 
         if not hide_default_draw:
+
+            # # Check if the item is selected
+            # if option.state & QtWidgets.QStyle.State_Selected:
+            #     option.state &= ~QtWidgets.QStyle.State_Selected
+                
+                # # Draw a dotted line around the cell
+                # pen = QtGui.QPen(QtCore.Qt.DotLine)
+                # pen.setColor(QtCore.Qt.black)
+                # painter.save()
+                # painter.setPen(pen)
+                # row_rect = self.getRowRect(index)
+                # row_rect = option.rect
+                # painter.drawRect(row_rect)  # Adjust to fit within cell bounds
+                # painter.restore()
+
+            # background = QtGui.QColor(128, 128, 128)
+            # painter.fillRect(myOption.rect, background)
             super().paint(painter, option, index)
 
         fields = index.model().fields
@@ -194,6 +269,31 @@ class AssetDelegate(QStyledItemDelegate):
         painter.setPen(QtGui.QPen(QtGui.QColor(QtCore.Qt.darkGreen)))
         painter.drawPolygon(polygonTriangle)
         painter.restore()
+
+
+    # def getRowRect(self, index):
+    #     """
+    #     Get the rectangle covering the entire row for the given index.
+    #     """
+    #     model = index.model()
+    #     table_view = index.model().parent()  # Assuming the table view is the parent of the model
+    #     if not isinstance(table_view, QtWidgets.QTableView):
+    #         return QtCore.QRect()
+
+    #     # Get the row height
+    #     row_height = table_view.rowHeight(index.row())
+
+    #     # Get the full width of the table view
+    #     full_width = table_view.viewport().width()
+
+    #     # Create a rectangle that spans the entire row
+    #     rect = QtCore.QRect(
+    #         table_view.visualRect(index).x(),
+    #         table_view.visualRect(index).y(),
+    #         full_width,
+    #         row_height
+    #     )
+    #     return rect
 
 # not used right now, one could also define specific delegates for certain columns
 # if things get complex and do not wish to have lots of if/else in main delegate

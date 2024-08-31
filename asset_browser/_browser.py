@@ -119,6 +119,7 @@ class MyWindow(QtWidgets.QDialog):
             )
             for i in range(10)
         ]
+        self.assets[3]._overriden = True
 
         # Create the model and set it to the list view
         self.model = AssetModel(self.assets)
@@ -132,7 +133,11 @@ class MyWindow(QtWidgets.QDialog):
         self.tableView.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.tableView.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.tableView.setShowGrid(False)
-
+        # self.tableView.setStyleSheet("""
+        #     QTableView::item:selected {
+        #         background-color: transparent;
+        #     }
+        # """)
         self.resize(330, 420)
         self.show()
 
@@ -168,6 +173,7 @@ def main():
         win = MyWindow(getMayaWindow())
     else:
         QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_ShareOpenGLContexts)
+        sys.argv.extend(["--platformtheme", "qt5ct"]) # no effect
         app = QtWidgets.QApplication(sys.argv)
         win = MyWindow()
         sys.exit(app.exec())
