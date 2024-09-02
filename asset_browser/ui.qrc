@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="/">
+    <file>icon/magic-wand.png</file>
+    <file>icon/ghost.png</file>
+  </qresource>
+</RCC>

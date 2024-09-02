@@ -6,7 +6,8 @@
         {
             "label": "code run",
             "type": "shell",
-            "command": "python -u ${workspaceFolder}/asset_browser/_browser.py"
+            "command": "python -u ${workspaceFolder}/asset_browser/_browser.py",
+            "problemMatcher": []
         }
     ]
 }

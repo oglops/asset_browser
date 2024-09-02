@@ -51,6 +51,8 @@
    <header>_browser.h</header>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="ui.qrc"/>
+ </resources>
  <connections/>
 </ui>

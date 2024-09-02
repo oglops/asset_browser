@@ -21,7 +21,7 @@ class AssetModel(QtCore.QAbstractTableModel):
     def __init__(self, assets: List[AssetDef], parent=None):
         super().__init__(parent)
         self.assets = assets
-        self.fields = [ x for x in fields(AssetDef) if x.metadata.get('visible')!=False]
+        self.fields = [ x for x in fields(AssetDef) if x.metadata.get('visible')]
         self.headers = [x.metadata.get('ui_name', x.name) for x in self.fields ]
         self._visible_columns = set(self.headers)
     
@@ -103,6 +103,25 @@ def makeEditorWidget(_type, asset, parent):
 
     return combobox
 
+class TypeDelegate(QStyledItemDelegate):
+
+    def __init__(self):
+        super().__init__()
+        self._icons = {AssetType.CHARACTER: QtGui.QIcon(":/icon/ghost.png"),
+            AssetType.PROP: QtGui.QIcon(":/icon/magic-wand.png")}
+
+    def paint(self, painter, option, index):
+        super().paint(painter, option, index)
+        asset = index.model().assets[index.row()]
+        field = index.model().fields[index.column()]
+        # Determine the icon's position and size
+        icon_rect = QRect(option.rect)
+        icon_size = QSize(16, 16)  # Adjust the size of the icon
+        icon_rect.setSize(icon_size)
+        icon_rect.moveCenter(option.rect.center())
+
+        # Draw the icon
+        self._icons[asset._type].paint(painter, icon_rect)
 
 class AssetDelegate(QStyledItemDelegate):
     def __init__(self, parent=None):
@@ -153,7 +172,6 @@ class AssetDelegate(QStyledItemDelegate):
 
     def paint(self, painter, option, index):
         asset = index.model().assets[index.row()]
-
         field = index.model().fields[index.column()]
         
         hide_default_draw = False
