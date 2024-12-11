@@ -4,6 +4,10 @@ import sys
 from Qt import QtWidgets, QtCompat, QtCore, QtGui
 from dataclasses import fields
 from typing import List
+import ui_qrc
+
+import signal
+signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 uiFile = os.path.join(os.path.dirname(__file__), "test.ui")
 print(f"uiFile = {uiFile}")
@@ -19,7 +23,7 @@ except:
     pass
 
 
-from _model import AssetModel, AssetDelegate, ComboBoxDelegate
+from _model import AssetModel, AssetDelegate, ComboBoxDelegate, TypeDelegate
 
 from _asset import AssetDef, AssetType
 from functools import partial
@@ -129,11 +133,14 @@ class MyWindow(QtWidgets.QDialog):
         self.delegate = AssetDelegate()
         self.tableView.setItemDelegate(self.delegate)
 
+        self.tableView.setItemDelegateForColumn(0, TypeDelegate())
+
         self.tableView.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.tableView.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.tableView.setShowGrid(False)
 
-        self.resize(330, 420)
+        self.tableView.setColumnWidth(0,30)
+        self.resize(390, 400)
         self.show()
 
         self.resetBtn.clicked.connect(self._resetChanges)
